@@ -1,10 +1,16 @@
 package model.dao.impl;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import com.mysql.jdbc.Statement;
 
 import db.DB;
 import db.DbException;
@@ -21,8 +27,37 @@ public class PacienteDaoJDBC implements PacienteDao {
 
 	@Override
 	public void insert(Paciente obj) {
-		// TODO Auto-generated method stub
-
+		PreparedStatement st = null;
+		try {
+			st = (PreparedStatement) conn.prepareStatement(
+					"INSERT INTO paciente "
+					+ "(nome, dataNasc, telefone) "
+					+ "VALUES "
+					+ "(?, ?, ?)",
+					Statement.RETURN_GENERATED_KEYS);
+			st.setString(1, obj.getNome());
+			st.setDate(2, new java.sql.Date(obj.getDataNasc().getTime()));
+			st.setString(3, obj.getTelefone());			
+			
+			int rowsAffected = st.executeUpdate();
+			if(rowsAffected > 0) {
+				ResultSet rs = st.getGeneratedKeys();
+				if(rs.next()) {
+					int id = rs.getInt(1);
+					obj.setId(id);
+				}
+				DB.closeResultSet(rs);
+			}else {
+				throw new DbException("Erro inesperado tente novamente!");
+			}			
+		}
+		catch (SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+		}
+		
 	}
 
 	@Override
@@ -51,8 +86,7 @@ public class PacienteDaoJDBC implements PacienteDao {
 			rs = st.executeQuery();
 			
 			if(rs.next()) {
-				Paciente pac = new Paciente();
-				pac.setNome(rs.getString("nome"));
+				Paciente pac = instanciaPaciente(rs);
 				return pac;
 			}		
 			return null;
@@ -68,8 +102,45 @@ public class PacienteDaoJDBC implements PacienteDao {
 
 	@Override
 	public List<Paciente> findAll() {
-		// TODO Auto-generated method stub
-		return null;
+		
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement(
+					"SELECT * FROM paciente "
+					);
+			
+			rs = st.executeQuery();
+			
+			List<Paciente> list = new ArrayList<>();
+			
+					
+			while(rs.next()) {
+				
+				Paciente pac =  instanciaPaciente(rs);
+				list.add(pac);			
+				
+			}		
+			return list;
+		}
+		catch(SQLException e){
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}		
+	}
+	
+	
+	public Paciente instanciaPaciente(ResultSet rs) throws SQLException {
+		Paciente pac = new Paciente();
+		pac.setNome(rs.getString("nome"));
+		pac.setId(rs.getInt("idPaciente"));
+		pac.setDataNasc(rs.getDate("dataNasc"));
+		pac.setTelefone(rs.getString("telefone"));
+		return pac;
 	}
 
 }
