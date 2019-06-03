@@ -32,6 +32,11 @@ public class Program {
 		pacDao.insert(novoPac);
 		System.out.println("Paciente inserido id = " + novoPac.getId());
 		
+		System.out.println("=======TESTE 4 UPDATE=======");		
+		pac = pacDao.findById(1);
+		pac.setNome("Bob");
+		pacDao.update(pac);
+		System.out.println("Alteração realizada!");
 	}
 
 }

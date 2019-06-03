@@ -62,13 +62,50 @@ public class PacienteDaoJDBC implements PacienteDao {
 
 	@Override
 	public void update(Paciente obj) {
-		// TODO Auto-generated method stub
-	}
-
+		
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		
+		try {
+			st = conn.prepareStatement(
+					"UPDATE paciente "
+					+ "SET nome = ?, dataNasc =?, telefone = ? "
+					+ "WHERE idPaciente = ?"		
+					);
+			
+			st.setString(1, obj.getNome());
+			st.setDate(2, new  java.sql.Date(obj.getDataNasc().getTime()));
+			st.setString(3, obj.getTelefone());
+			st.setInt(4, obj.getId());	
+			st.executeUpdate();							
+		}
+		catch(SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+		}		
+	}	
+	
 	@Override
 	public void deleteById(Integer id) {
-		// TODO Auto-generated method stub
-
+		PreparedStatement st = null;
+		
+		try {
+			st = conn.prepareStatement(
+						"DELETE FROM paciente WHERE idPaciente = ?"
+					);
+			
+			st.setInt(1, id);
+			st.executeQuery();			
+		}
+		catch(SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+		}
+		
 	}
 
 	@Override
@@ -131,8 +168,7 @@ public class PacienteDaoJDBC implements PacienteDao {
 			DB.closeStatement(st);
 			DB.closeResultSet(rs);
 		}		
-	}
-	
+	}	
 	
 	public Paciente instanciaPaciente(ResultSet rs) throws SQLException {
 		Paciente pac = new Paciente();
